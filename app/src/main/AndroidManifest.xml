@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="io.github.abdurazaaqmohammed.connect4">
+       <application
+        android:icon="@android:drawable/ic_notification_overlay"
+        android:theme="@android:style/Theme.NoTitleBar"
+        android:label="connect4">
+        <activity
+            android:name="io.github.abdurazaaqmohammed.connect4.MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>
