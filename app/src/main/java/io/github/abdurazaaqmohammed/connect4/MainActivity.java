@@ -2,16 +2,20 @@ package io.github.abdurazaaqmohammed.connect4;
 
 import android.app.Activity;
 import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.LayerDrawable;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.Toast;
 
 import java.util.Timer;
 import java.util.TimerTask;
-
 
 public class MainActivity extends Activity {
 
@@ -24,17 +28,18 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        TableLayout tableLayout = createBoard();
-        setContentView(tableLayout);
-    }
-
-    private TableLayout createBoard() {
-        TableLayout tableLayout = new TableLayout(this);
-        tableLayout.setStretchAllColumns(true);
-        tableLayout.setShrinkAllColumns(true);
-        tableLayout.setGravity(Gravity.CENTER);
-        tableLayout.setPadding(16, 16, 16, 16);
-        tableLayout.setBackgroundColor(Color.BLACK);
+        TableLayout tableLayout1 = new TableLayout(this);
+        tableLayout1.setStretchAllColumns(true);
+        tableLayout1.setShrinkAllColumns(true);
+        tableLayout1.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        tableLayout1.setGravity(Gravity.CENTER);
+        tableLayout1.setPadding(16, 16, 16, 16);
+        tableLayout1.setBackgroundColor(Color.BLACK);
+        GradientDrawable border = new GradientDrawable();
+        border.setColor(Color.BLACK); // Background color
+        border.setStroke(5, Color.parseColor("#E6676B")); // Border width and color
+        border.setCornerRadius(16);
+        tableLayout1.setBackgroundDrawable(border);
 
         for (int row = 0; row < ROWS; row++) {
             TableRow tableRow = new TableRow(this);
@@ -54,24 +59,34 @@ public class MainActivity extends Activity {
                     for (int r = ROWS - 1; r >= 0; r--) {
                         View curr = board[r][col1];
                         if (curr.getTag() == null) {
-                            curr.setBackgroundColor(currentPlayer == 1 ? Color.parseColor("#E6676B") : Color.parseColor("#AEE8F5"));
+                            border.setStroke(5, Color.parseColor(currentPlayer == 1 ? "#AEE8F5" : "#E6676B")); // Border width and color
+                            tableLayout1.setBackgroundDrawable(border);
+
+                            GradientDrawable gradientDrawable = new GradientDrawable();
+                            gradientDrawable.setShape(GradientDrawable.OVAL);
+                            gradientDrawable.setColor(Color.parseColor(currentPlayer == 1 ? "#E6676B" : "#AEE8F5"));
+                            LayerDrawable layerDrawable = new LayerDrawable(new Drawable[]{new ColorDrawable(Color.DKGRAY), gradientDrawable});
+                            curr.setBackgroundDrawable(layerDrawable);
                             curr.setTag(currentPlayer);
                             if (checkDirection(r, col1, 1, 0) ||  // Horizontal
                                     checkDirection(r, col1, 0, 1) ||  // Vertical
                                     checkDirection(r, col1, 1, 1) ||  // Diagonal
                                     checkDirection(r, col1, 1, -1)) {
-                                Toast.makeText(MainActivity.this, (currentPlayer==1 ? "Red" : "Blue") + " wins!", Toast.LENGTH_LONG).show();
+                                Toast.makeText(this, (currentPlayer == 1 ? "Red" : "Blue") + " wins!", Toast.LENGTH_LONG).show();
                                 new Timer().schedule(new TimerTask() {
                                     @Override
                                     public void run() {
-                                        currentPlayer = 1;
-                                        for (int i12 = 0; i12 < ROWS; i12++) {
-                                            for (int j12 = 0; j12 < COLS; j12++) {
-                                                View curr = board[i12][j12];
-                                                curr.setBackgroundColor(Color.GRAY);
-                                                curr.setTag(null);
+                                        runOnUiThread(() -> {
+                                            border.setStroke(5, Color.parseColor("#E6676B")); // Border width and color
+                                            currentPlayer = 1;
+                                            for (int i = 0; i < ROWS; i++) {
+                                                for (int j = 0; j < COLS; j++) {
+                                                    View curr1 = board[i][j];
+                                                    curr1.setBackgroundColor(Color.DKGRAY);
+                                                    curr1.setTag(null);
+                                                }
                                             }
-                                        }
+                                        });
                                     }
                                 }, 2000);
                             }
@@ -80,14 +95,31 @@ public class MainActivity extends Activity {
                         }
                     }
                 });
+
                 board[row][col] = cell;
                 tableRow.addView(cell);
             }
 
-            tableLayout.addView(tableRow);
+            tableLayout1.addView(tableRow);
         }
 
-        return tableLayout;
+        tableLayout1.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
+            int screenWidth = tableLayout1.getWidth();
+            int screenHeight = tableLayout1.getHeight();
+            int size = Math.min(screenWidth / COLS, screenHeight / ROWS);
+
+            for (int row = 0; row < ROWS; row++) {
+                for (int col = 0; col < COLS; col++) {
+                    View cell = board[row][col];
+                    TableRow.LayoutParams params = (TableRow.LayoutParams) cell.getLayoutParams();
+                    params.width = size;
+                    params.height = size;
+                    cell.setLayoutParams(params);
+                }
+            }
+        });
+
+        setContentView(tableLayout1);
     }
 
     private boolean checkDirection(int row, int col, int dRow, int dCol) {
@@ -105,7 +137,8 @@ public class MainActivity extends Activity {
         int c = col + dCol;
         int count = 0;
 
-        while (r >= 0 && r < ROWS && c >= 0 && c < COLS && board[r][c].getTag() != null && board[r][c].getTag().equals(player)) {
+        while (r >= 0 && r < ROWS && c >= 0 && c < COLS &&
+                board[r][c].getTag() != null && board[r][c].getTag().equals(player)) {
             count++;
             r += dRow;
             c += dCol;
